@@ -1,19 +1,27 @@
 % Merges single agent plans and detects conflicts.
 
 %% CONFLICT DETECTION %%
-v_conflict(RID, RID', NID, T) :- robot_at(RID, NID, T), robot_at(RID', NID, T), RID < RID'.
+conflict(RID, RID', T) :- robot_at(RID, NID, T), robot_at(RID', NID, T), RID < RID'.
+conflict(RID, RID', T) :- robot_at(RID, NID, T), robot_at(RID, NID', T+1), robot_at(RID', NID', T), robot_at(RID', NID, T+1), RID < RID'. 
 
-first_conflict(M) :-  M = #min {T : v_conflict(_, _, _, T)}.
+first_conflict(T) :-  conflict(_, _, T), #false : conflict(_,_,T'), T' < T.
+
+step_re(T) :- step(T), first_conflict(M), T >= M.
 
 %% REPLAN %%
 final_plan(RID, NID, T) :- robot_at(RID, NID, T), first_conflict(M), T < M.
 
-{ move_alt(RID,D,T) : direction(D) } 1 :- robot(RID), step(T), first_conflict(M), T >= M.
+{ move_alt(RID,D,T) : direction(D) } 1 :- robot(RID), step_re(T).
 
-final_plan(RID,NID,T) :- move_alt(RID,D,T), final_plan(RID,NID',T-1), nextto(NID',D,NID).
+int_plan(RID,NID,M-1) :- final_plan(RID,NID,M-1), first_conflict(M).
+
+int_plan(RID,NID,T) :- move_alt(RID,D,T), int_plan(RID,NID',T-1), nextto(NID',D,NID).
 
 %% GOAL %%
-:- not final_plan(_, NID, horizon), goal (NID).
+:- not final_plan(RID, NID, _), goal(NID, RID).
 
 %% AVOID CONFLICTS %%
- :- final_plan(RID,NID,T), final_plan(RID',NID,T), RID < RID'.
+:- int_plan(RID,NID,T), int_plan(RID',NID,T), RID < RID'.
+:- int_plan(RID, NID, T), int_plan(RID, NID', T+1), int_plan(RID', NID', T), int_plan(RID', NID, T+1), RID < RID'.
+
+final_plan(RID,NID,T) :- int_plan(RID,NID,T).
