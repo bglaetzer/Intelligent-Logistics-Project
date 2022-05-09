@@ -10,3 +10,9 @@ Truncate last line to visualize with asprilo-visualizer.
 
 Execute in Linux:
 clingo Instances/corridor_2_instance.lp Encodings/input.lp Encodings/plans.lp Encodings/merge.lp Encodings/output.lp -V0 --out-atomf=%s. -c horizon=25 |  head -n 1 > Out/final_plans.lp
+
+
+General properties of the project:
+ - non-anonymous MAPF
+ - detection for vertex, edge and following conflicts
+ - apply MetaAgent-CBS in ASP and extend it with some interesting features
