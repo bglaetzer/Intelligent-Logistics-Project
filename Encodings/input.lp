@@ -9,4 +9,4 @@ robot_at(R, ID) :- node(ID,X,Y), init(object(robot,R), value(at,(X,Y))).
 robot(R) :- robot_at(R, _).
 
 % Goals
-goal(ID) :- node(ID,X,Y), init(object(shelf,_),value(at,(X,Y))).
+goal(ID, SID) :- node(ID,X,Y), init(object(shelf,SID),value(at,(X,Y))).

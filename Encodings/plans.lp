@@ -17,6 +17,4 @@ nextto(ID,(X',Y'),ID') :- node(ID,X,Y), direction((X',Y')), node(ID',X+X',Y+Y').
 robot_at(RID,NID,T) :- move(RID,D,T), robot_at(RID,NID',T-1), nextto(NID',D,NID).
 
 %% GOAL %%
-1 {goal(NID,RID) : robot(RID)} 1 :- goal(NID).
-:- robot(RID), not goal(_,RID). 
 :- not robot_at(RID, NID, _), goal(NID, RID).
