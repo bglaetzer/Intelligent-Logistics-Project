@@ -10,3 +10,7 @@ robot(R) :- robot_at(R, _).
 
 % Goals
 goal(ID, SID) :- node(ID,X,Y), init(object(shelf,SID),value(at,(X,Y))).
+
+#show node/3.
+#show robot_at/2.
+#show goal/2.

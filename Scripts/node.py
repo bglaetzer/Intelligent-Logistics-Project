@@ -12,28 +12,13 @@ class ConstraintNode():
         ctl = clingo.Control([])
         ctl.add("base", [], f"#const horizon={horizon}.")
         ctl.load("Encodings/plans.lp")
-        self.load_in_clingo(ctl, instance)
+        instance.load_in_clingo(ctl)
         ctl.ground([("base", [])])
         
-        # TODO:Integrate constraints from current node into solving
-        ctl.solve(on_model = lambda m: self.on_model_solution(m))
+        # TODO:Integrate constraints from current node into solving and replan 2 agents
 
-    def on_model_solution(self, m):
-        for symbol in m.symbols(shown=True):
-            if(str(symbol).startswith("robot_at") and len(symbol.arguments) > 2):
-                robot_id = str(symbol.arguments[0])
-                node_id = str(symbol.arguments[1])
-                step = int(str(symbol.arguments[2]))
+    def calculate_cost(self):
+        pass #TODO: Calculate Sum of Costs for a node solution here (might be helpful to use some ASP)
 
-                self.solution.append([robot_id][step][node_id])
-                # TODO: Calculate and  Update Cost here
-
-    def load_in_clingo(ctl, instance):
-        for node in instance.nodes:
-            ctl.add("base", [],  f"node({node['id']}).")\
-
-        for robot in instance.robots:
-            ctl.add("base", [], f"robot_at({robot['id']}, {robot['node_id']}).")
-
-        for goal in instance.goals:
-            ctl.add("base", [], f"goal({goal['node_id']}, {goal['robot_id']}).")
+    def identify_conflict(self):
+        pass #TODO: get the first conflict or identify that there a no conflicts 
