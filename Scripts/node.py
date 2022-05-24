@@ -1,4 +1,4 @@
-import os, subprocess, clingo
+import clingo
 
 class ConstraintNode():
     def __init__(self):

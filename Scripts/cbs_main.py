@@ -64,8 +64,7 @@ def run(args):
     root_node.calculate_cost(trans_instance)
     tree.nodes.append(root_node)
 
-    root_node.show()
-
+    tree.get_next()
     
     # TODO: Start the loop
 
