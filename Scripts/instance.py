@@ -5,6 +5,11 @@ class ClingoInstance():
         self.robots = []
         self.goals = []
 
+    def show(self):
+        print("Nodes:", self.nodes)
+        print("Robot starting positions:", self.robots)
+        print("Goal positions:", self.goals)
+
     def on_model_load_input(self, m):
         for symbol in m.symbols(shown=True):
             if(str(symbol).startswith("node")):
