@@ -8,10 +8,12 @@ class ConstraintTree():
         self.next = ConstraintNode()
 
     def get_next(self):
+        cur = ConstraintNode()
+        cur.id = -1
         for node in self.nodes:
-            cur = 0
-            if(cur == 0 or node.cost < cur):
-                self.next = node
+            if(cur.id == -1 or node.cost < cur.cost):
+                cur = node
+        self.next = cur
 
     def show(self):
         print("Nodes:")
