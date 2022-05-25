@@ -3,16 +3,10 @@ Github repo for the intelligent logistics project in the summer semester 2022 at
 Contributors: Benjamin Glätzer and Mert Akil
 
 
-Execute in Windows:
-clingo Instances\corridor_2_instance.lp Encodings\input.lp Encodings\plans.lp Encodings\merge.lp Encodings\output.lp -V0 --out-atomf=%s. -c horizon=25 > Out\final_plans.lp
-
-Truncate last line to visualize with asprilo-visualizer.
-
-Execute in Linux:
-clingo Instances/corridor_2_instance.lp Encodings/input.lp Encodings/plans.lp Encodings/merge.lp Encodings/output.lp -V0 --out-atomf=%s. -c horizon=25 |  head -n 1 > Out/final_plans.lp
-
+Execute in Windows (example):
+python Scripts\cbs_main.py -i Instances\corridor_2_instance.lp -o 25
 
 General properties of the project:
  - non-anonymous MAPF
- - detection for vertex, edge and following conflicts
+ - detection for vertex and edge conflicts
  - apply MetaAgent-CBS in ASP and extend it with some interesting features
