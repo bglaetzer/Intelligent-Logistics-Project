@@ -15,9 +15,12 @@ class ConstraintTree():
                 cur = node
         self.next = cur
 
-    def show(self):
-        print("Nodes:")
-        for node in self.nodes:
-            node.show()
-        print("Next node to expand:")
-        self.next.show()
+    def show(self, level):
+        if(level > 0):
+            print("Nodes:")
+            for node in self.nodes:
+                node.show()
+            print("Next node to expand:")
+            self.next.show()
+        else:
+            print(len(self.nodes))

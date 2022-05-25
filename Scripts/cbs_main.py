@@ -14,10 +14,10 @@ def initial_solve(horizon, trans_instance, node):
     trans_instance.load_in_clingo(ctl)
     ctl.ground([("base", [])])
 
-    ctl.solve(on_model = lambda m: on_model_solution(node, m)) #TODO: If instance is unsatisfied (could not understand python API on this)
+    ctl.solve(on_model = lambda m: on_initial_model(node, m)) #TODO: If instance is unsatisfied (could not understand python API on this)
 
 #Saves plans in a dict and first conflict in a list
-def on_model_solution(node, m):
+def on_initial_model(node, m):
     for symbol in m.symbols(shown=True):
         if(str(symbol).startswith("robot_at") and len(symbol.arguments) > 2):
             robot_id = str(symbol.arguments[0])
@@ -64,9 +64,44 @@ def run(args):
     root_node.calculate_cost(trans_instance)
     tree.nodes.append(root_node)
 
-    tree.get_next()
-    
-    # TODO: Start the loop
+    #Main CBS loop
+    while len(tree.nodes) > 0:
+        tree.get_next()
+        tree.show(0)
+        if(len(tree.next.min_conflict) == 0):
+            print("Instance solved. Solution:")
+            tree.next.show()
+            break
+        else:
+            child_node_1 = ConstraintNode()
+            child_node_1.parent = tree.next.id
+            child_node_1.id = tree.next.id*2
+            child_node_1.constraint.append([tree.next.min_conflict[1], tree.next.min_conflict[3], tree.next.min_conflict[4]])
+            for cons in tree.next.constraint:
+                child_node_1.constraint.append(cons)
+            #child_node_1.solution = tree.next.solution
+            child_node_1.update_solution(horizon, trans_instance)
+            child_node_1.calculate_cost(trans_instance)
+
+
+
+            child_node_2 = ConstraintNode()
+            child_node_2.parent = tree.next.id
+            child_node_2.id = tree.next.id*2+1
+            child_node_2.constraint.append([tree.next.min_conflict[2], tree.next.min_conflict[3], tree.next.min_conflict[4]])
+            for cons in tree.next.constraint:
+                child_node_2.constraint.append(cons)
+            #child_node_2.solution = tree.next.solution
+            child_node_2.update_solution(horizon, trans_instance)
+            child_node_2.calculate_cost(trans_instance)
+
+            tree.nodes.remove(tree.next)
+            tree.nodes.append(child_node_1)
+            tree.nodes.append(child_node_2)
+    else:
+        print("Instance unsolvable.")
+
+
 
 
 parser = argparse.ArgumentParser()
