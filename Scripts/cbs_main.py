@@ -1,3 +1,4 @@
+from logging import root
 import clingo, argparse
 
 from numpy import full
@@ -36,8 +37,8 @@ def on_initial_model(node, m):
             node_id = str(symbol.arguments[3])
             step = int(str(symbol.arguments[4]))
 
-            if(len(node.min_conflict) == 0 or step < node.min_conflict[4]):#TODO: check if more than 2 agents collide
-                node.min_conflict = [conflict_id, robot1_id, robot2_id, node_id, step]
+            if(len(node.min_conflict) == 0 or step < node.min_conflict["step"]):#TODO: check if more than 2 agents collide
+                node.min_conflict = {"type" : conflict_id, "robots" : [robot1_id, robot2_id], "node" : node_id, "step" : step}
 
 
 def run(args):
@@ -73,31 +74,20 @@ def run(args):
             tree.next.show()
             break
         else:
-            child_node_1 = ConstraintNode()
-            child_node_1.parent = tree.next.id
-            child_node_1.id = tree.next.id*2
-            child_node_1.constraint.append([tree.next.min_conflict[1], tree.next.min_conflict[3], tree.next.min_conflict[4]])
-            for cons in tree.next.constraint:
-                child_node_1.constraint.append(cons)
-            #child_node_1.solution = tree.next.solution
-            child_node_1.update_solution(horizon, trans_instance)
-            child_node_1.calculate_cost(trans_instance)
-
-
-
-            child_node_2 = ConstraintNode()
-            child_node_2.parent = tree.next.id
-            child_node_2.id = tree.next.id*2+1
-            child_node_2.constraint.append([tree.next.min_conflict[2], tree.next.min_conflict[3], tree.next.min_conflict[4]])
-            for cons in tree.next.constraint:
-                child_node_2.constraint.append(cons)
-            #child_node_2.solution = tree.next.solution
-            child_node_2.update_solution(horizon, trans_instance)
-            child_node_2.calculate_cost(trans_instance)
-
+            cnt = 0
+            for robot in tree.next.min_conflict.get("robots"):
+                child_node = ConstraintNode()
+                child_node.parent = tree.next.id
+                child_node.id = tree.next.id*2 + cnt
+                child_node.constraint.append([robot, tree.next.min_conflict.get("node"), tree.next.min_conflict.get("step")])
+                for cons in tree.next.constraint:
+                    child_node.constraint.append(cons)
+                #child_node.solution = tree.next.solution
+                child_node.update_solution(horizon, trans_instance)
+                child_node.calculate_cost(trans_instance)
+                cnt += 1
+                tree.nodes.append(child_node)
             tree.nodes.remove(tree.next)
-            tree.nodes.append(child_node_1)
-            tree.nodes.append(child_node_2)
     else:
         print("Instance unsolvable.")
 

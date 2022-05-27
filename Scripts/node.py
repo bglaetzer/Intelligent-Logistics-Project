@@ -5,7 +5,7 @@ class ConstraintNode():
         self.id = 0
         self.parent = 0
         self.constraint = []
-        self.min_conflict = []
+        self.min_conflict = {}
         self.solution = {}
         self.cost = 0
 
@@ -41,7 +41,7 @@ class ConstraintNode():
             step = int(str(symbol.arguments[4]))
 
             if(len(self.min_conflict) == 0 or step < self.min_conflict[4]):#TODO: check if more than 2 agents collide
-                self.min_conflict = [conflict_id, robot1_id, robot2_id, node_id, step]
+                self.min_conflict = {"type" : conflict_id, "robots" : [robot1_id, robot2_id], "node" : node_id, "step" : step}
 
     def load_constraints_in_clingo(self, ctl):
         for cons in self.constraint:
