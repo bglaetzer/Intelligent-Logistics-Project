@@ -53,7 +53,7 @@ def run(args):
     # Load instance and transform input
     ctl = clingo.Control()
     ctl.load(instance)
-    ctl.load("encodings/input.lp")
+    ctl.load("Encodings/input.lp")
     ctl.ground([("base", [])])
     ctl.solve(on_model= lambda m: trans_instance.on_model_load_input(m))
 
