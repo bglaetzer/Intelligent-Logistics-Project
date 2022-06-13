@@ -1,7 +1,4 @@
-from logging import root
 import clingo, argparse
-
-from numpy import full
 
 from node import ConstraintNode
 from instance import ClingoInstance
@@ -12,7 +9,7 @@ def initial_solve(horizon, trans_instance, node):
     ctl = clingo.Control([])
     ctl.add("base", [], f"#const horizon={horizon}.")
     ctl.load("Encodings/plans.lp")
-    trans_instance.load_in_clingo(ctl)
+    trans_instance.load_in_clingo(ctl, False, 0)
     ctl.ground([("base", [])])
 
     ctl.solve(on_model = lambda m: on_initial_model(node, m)) #TODO: If instance is unsatisfied (could not understand python API on this)
@@ -26,19 +23,12 @@ def on_initial_model(node, m):
             step = int(str(symbol.arguments[2]))
 
             if robot_id in node.solution.keys():
-                node.solution[robot_id][node_id] = [step]
+                node.solution[robot_id][step] = node_id
             else:
                 node.solution[robot_id] = {step : node_id}
-        
-        if(str(symbol).startswith("conflict") and len(symbol.arguments) > 4):
-            conflict_id = str(symbol.arguments[0])
-            robot1_id = str(symbol.arguments[1])
-            robot2_id = str(symbol.arguments[2])
-            node_id = str(symbol.arguments[3])
-            step = int(str(symbol.arguments[4]))
 
-            if(len(node.min_conflict) == 0 or step < node.min_conflict["step"]):#TODO: check if more than 2 agents collide
-                node.min_conflict = {"type" : conflict_id, "robots" : [robot1_id, robot2_id], "node" : node_id, "step" : step}
+        if(str(symbol).startswith("sum_of_costs")):
+            node.cost = int(str(symbol.arguments[0]))
 
 
 def run(args):
@@ -62,16 +52,16 @@ def run(args):
     root_node.parent = 0
     root_node.id = 1
     initial_solve(horizon, trans_instance, root_node)
-    root_node.calculate_cost(trans_instance)
     tree.nodes.append(root_node)
 
     #Main CBS loop
     while len(tree.nodes) > 0:
         tree.get_next()
-        tree.show(0)
+        tree.next.validate_solution()
+        tree.next.show()
         if(len(tree.next.min_conflict) == 0):
-            print("Instance solved. Solution:")
-            tree.next.show()
+            print("Instance solved.")
+            #tree.next.show()
             break
         else:
             cnt = 0
@@ -82,8 +72,9 @@ def run(args):
                 child_node.constraint.append([robot, tree.next.min_conflict.get("node"), tree.next.min_conflict.get("step")])
                 for cons in tree.next.constraint:
                     child_node.constraint.append(cons)
-                #child_node.solution = tree.next.solution
-                child_node.update_solution(horizon, trans_instance)
+                child_node.solution = tree.next.solution
+                child_node.solution.pop(robot)
+                child_node.update_solution(horizon, trans_instance, robot)
                 child_node.calculate_cost(trans_instance)
                 cnt += 1
                 tree.nodes.append(child_node)

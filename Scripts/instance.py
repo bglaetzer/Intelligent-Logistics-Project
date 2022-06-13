@@ -29,13 +29,21 @@ class ClingoInstance():
                     'robot_id': int(str(symbol.arguments[1]))
                 })
 
-    def load_in_clingo(self, ctl):
+    def load_in_clingo(self, ctl, flag, agent):
         for node in self.nodes:
             ctl.add("base", [],  f"node({node['id']}, {node['X']}, {node['Y']}).")
         for robot in self.robots:
-            ctl.add("base", [], f"robot_at({robot['id']}, {robot['node_id']}).")
+            if(flag == True):
+                if(robot["id"] == agent):
+                    ctl.add("base", [], f"robot_at({robot['id']}, {robot['node_id']}).")
+            else:
+                ctl.add("base", [], f"robot_at({robot['id']}, {robot['node_id']}).")
 
         for goal in self.goals:
-            ctl.add("base", [], f"goal({goal['node_id']}, {goal['robot_id']}).")
+            if(flag == True):
+                if(int(goal['robot_id']) == int(agent)):
+                    ctl.add("base", [], f"goal({goal['node_id']}, {goal['robot_id']}).")
+            else:
+                ctl.add("base", [], f"goal({goal['node_id']}, {goal['robot_id']}).")
 
         ctl.add("base", [], f"robot(ID) :- robot_at(ID, _).")
