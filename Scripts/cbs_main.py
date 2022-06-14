@@ -106,11 +106,11 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-i", "--instance", help="Instance that should be solved. Asprilo Input format is required", required=True)
 parser.add_argument("-o", "--horizon", help="The upper bound for the solution, as in maximum number of steps for a single agent.", type=int, required=True)
-parser.add_argument("-v", "--vizualize", help="Visualizes the graph with clingraph", action='store_true')
+parser.add_argument("-v", "--visualize", help="Visualizes the graph with clingraph", action='store_true')
 parser.add_argument("-a", "--asprilo_output", help="Generates an asprilo output file for the solution and saves it at the specified location", default="")
 
-
-
 args = parser.parse_args()
+
+if args.visualize and not args.asprilo_output: parser.error("Clingraph needs asprilo output instance, please specify by using --asprilo_output OUTPUT_FILE")
 
 run(args)
