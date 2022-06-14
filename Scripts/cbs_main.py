@@ -30,6 +30,22 @@ def on_initial_model(node, m):
         if(str(symbol).startswith("sum_of_costs")):
             node.cost = int(str(symbol.arguments[0]))
 
+def transform_to_asprilo_output(trans_instance, node):
+    ctl = clingo.Control([])
+    ctl.load("Encodings/output.lp")
+    trans_instance.load_in_clingo(ctl, False, 0)
+    node.load_paths_in_clingo(ctl)
+    ctl.ground([("base", [])])
+
+    ctl.solve(on_model = lambda m: write_to_file( m))
+
+def write_to_file(m):
+    file = open(args.asprilo_output,"w")
+
+    for atom in m.symbols(shown=True):
+        file.write(f"{atom}.\n")
+
+    file.close()
 
 def run(args):
 
@@ -58,10 +74,10 @@ def run(args):
     while len(tree.nodes) > 0:
         tree.get_next()
         tree.next.validate_solution()
-        tree.next.show()
         if(len(tree.next.min_conflict) == 0):
             print("Instance solved.")
-            #tree.next.show()
+            if(args.asprilo_output):
+                transform_to_asprilo_output(trans_instance, tree.next)
             break
         else:
             cnt = 0
@@ -72,8 +88,9 @@ def run(args):
                 child_node.constraint.append([robot, tree.next.min_conflict.get("node"), tree.next.min_conflict.get("step")])
                 for cons in tree.next.constraint:
                     child_node.constraint.append(cons)
-                child_node.solution = tree.next.solution
-                child_node.solution.pop(robot)
+                for plan in tree.next.solution.items():
+                    if(plan[0]!=robot):
+                        child_node.solution[plan[0]] = plan[1]
                 child_node.update_solution(horizon, trans_instance, robot)
                 child_node.calculate_cost(trans_instance)
                 cnt += 1
@@ -89,6 +106,10 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-i", "--instance", help="Instance that should be solved. Asprilo Input format is required", required=True)
 parser.add_argument("-o", "--horizon", help="The upper bound for the solution, as in maximum number of steps for a single agent.", type=int, required=True)
+parser.add_argument("-v", "--vizualize", help="Visualizes the graph with clingraph", action='store_true')
+parser.add_argument("-a", "--asprilo_output", help="Generates an asprilo output file for the solution and saves it at the specified location", default="")
+
+
 
 args = parser.parse_args()
 
