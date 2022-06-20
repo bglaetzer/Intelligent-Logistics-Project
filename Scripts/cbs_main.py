@@ -1,14 +1,12 @@
-import clingo, argparse
+import clingo, argparse, sys, subprocess
 
 from node import ConstraintNode
 from instance import ClingoInstance
 from tree import ConstraintTree
-import sys
 
 #Yields initial single agent plans
 def initial_solve(horizon, trans_instance, node):
-    ctl = clingo.Control([])
-    ctl.add("base", [], f"#const horizon={horizon}.")
+    ctl = clingo.Control(["--opt-mode=opt", f"-c horizon={horizon}"])
     ctl.load("Encodings/plans.lp")
     trans_instance.load_in_clingo(ctl, False, 0)
     ctl.ground([("base", [])])
@@ -83,6 +81,9 @@ def run(args):
             print("Instance solved.")
             if(args.asprilo_output):
                 transform_to_asprilo_output(trans_instance, tree.next)
+                if(args.visualize):
+                    clin_out = subprocess.Popen(['clingo', instance, args.asprilo_output, '-n', '0', '--outf=2'], stdout=subprocess.PIPE)
+                    output = subprocess.run(["python", args.visualize, "--viz-encoding=Encodings/viz.lp", "--out=animate", "--engine=neato", "--dir=Out/clingraph", "--select-model=0", "--type=digraph", "--view", "--sort=asc-int"], stdin=clin_out.stdout)
             break
         else:
             cnt = 0
@@ -102,7 +103,7 @@ def run(args):
                 tree.nodes.append(child_node)
             tree.nodes.remove(tree.next)
     else:
-        print("Instance unsolvable.")
+        print("Instance unsolvable. Complete searchspace exhausted.")
 
 
 
@@ -111,7 +112,7 @@ parser = argparse.ArgumentParser()
 
 parser.add_argument("-i", "--instance", help="Instance that should be solved. Asprilo Input format is required", required=True)
 parser.add_argument("-o", "--horizon", help="The upper bound for the solution, as in maximum number of steps for a single agent.", type=int, required=True)
-parser.add_argument("-v", "--visualize", help="Visualizes the graph with clingraph", action='store_true')
+parser.add_argument("-v", "--visualize", help="Visualizes the graph with clingraph. Specify the path to your clingraph installation in the current conda environment for a better chance of success.", default="")
 parser.add_argument("-a", "--asprilo_output", help="Generates an asprilo output file for the solution and saves it at the specified location", default="")
 
 args = parser.parse_args()

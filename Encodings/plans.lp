@@ -1,6 +1,6 @@
 % Computes single agent paths for each agent (no conflict detection here).
 
-%#const horizon = 25.
+#const horizon = 25.
 step(1..horizon).
 
 %% INITIAL POSITIONS %%

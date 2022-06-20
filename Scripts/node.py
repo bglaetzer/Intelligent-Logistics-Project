@@ -1,5 +1,6 @@
 from ast import arguments
 import clingo
+import sys
 
 class ConstraintNode():
     def __init__(self):
@@ -46,15 +47,18 @@ class ConstraintNode():
 
 
     def update_solution(self, horizon, instance, agent):
-        ctl = clingo.Control([])
-        ctl.add("base", [], f"#const horizon={horizon}.")
+        ctl = clingo.Control(["--opt-mode=opt", f"-c horizon={horizon}"])
         ctl.load("Encodings/plans.lp")
         instance.load_in_clingo(ctl, True, agent)
         self.load_constraints_in_clingo(ctl)
 
         ctl.ground([("base", [])])
         
-        ctl.solve(on_model = lambda m: self.on_model_solution(m))
+        ctl.solve(on_finish = lambda sat: self.on_unsat(sat), on_model = lambda m: self.on_model_solution(m))
+
+    def on_unsat(self, sat):
+        if (sat.unsatisfiable == True):
+            sys.exit("Instance unsolvable. Maybe try a greater horizon.")
 
     def on_model_solution(self, m):
         for symbol in m.symbols(shown=True):
