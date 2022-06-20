@@ -3,6 +3,7 @@ import clingo, argparse
 from node import ConstraintNode
 from instance import ClingoInstance
 from tree import ConstraintTree
+import sys
 
 #Yields initial single agent plans
 def initial_solve(horizon, trans_instance, node):
@@ -12,7 +13,11 @@ def initial_solve(horizon, trans_instance, node):
     trans_instance.load_in_clingo(ctl, False, 0)
     ctl.ground([("base", [])])
 
-    ctl.solve(on_model = lambda m: on_initial_model(node, m)) #TODO: If instance is unsatisfied (could not understand python API on this)
+    ctl.solve(on_finish = lambda sat: on_unsat(sat), on_model = lambda m: on_initial_model(node, m))
+
+def on_unsat(sat):
+    if (sat.unsatisfiable == True):
+        sys.exit("Instance unsolvable. Maybe try a greater horizon.")
 
 #Saves plans in a dict and first conflict in a list
 def on_initial_model(node, m):
