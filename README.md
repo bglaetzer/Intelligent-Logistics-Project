@@ -6,8 +6,11 @@ Contributors: Benjamin Glätzer and Mert Akil
 Execute in Windows (example):
 python Scripts\cbs_main.py -i Instances\corridor_2_instance.lp -o 25 -a Out\out.lp
 
-Command for visualization with clingraph (CURRENTLY NOT RECOMMENDED, BUGGY AND GIGA-SLOW):
-python Scripts\cbs_main.py -i Instances\corridor_2_instance.lp -o 25 -a Out\out.lp -v \PATH\TO\CLINGRAPH\OF\CURRENT\CONDA\ENV
+Command for visualization with apsrilo viz:
+python Scripts\cbs_main.py -i Instances\corridor_2_instance.lp -o 25 -a Out\out.lp -v
+
+For benchmarking: 
+python Scripts\cbs_main.py -i Instances\corridor_2_instance.lp -o 25 -b out\benchmark.csv 
 
 General properties of the project:
  - non-anonymous MAPF

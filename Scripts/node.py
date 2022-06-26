@@ -11,6 +11,14 @@ class ConstraintNode():
         self.solution = {}
         self.cost = 0
 
+    def calculate_makespan(self):
+        temp = 0
+        for robot in self.solution.keys():
+            for sol in self.solution[str(robot)].items():
+                if(sol[0] > temp):
+                    temp = sol[0]
+        return(temp)
+
     def calculate_cost(self, instance):
         sum = 0
         for goal in instance.goals:
@@ -42,11 +50,11 @@ class ConstraintNode():
                 robot2_id = str(symbol.arguments[2])
                 node_id = str(symbol.arguments[3])
                 step = int(str(symbol.arguments[4]))
-
+                
                 self.min_conflict = {"type" : conflict_id, "robots" : [robot1_id, robot2_id], "node" : node_id, "step" : step}
 
 
-    def update_solution(self, horizon, instance, agent):
+    def update_solution(self, horizon, instance, agent, binfo, performance_start_time, start_time, file):
         ctl = clingo.Control(["--opt-mode=opt", f"-c horizon={horizon}"])
         ctl.load("Encodings/plans.lp")
         instance.load_in_clingo(ctl, True, agent)
@@ -54,10 +62,13 @@ class ConstraintNode():
 
         ctl.ground([("base", [])])
         
-        ctl.solve(on_finish = lambda sat: self.on_unsat(sat), on_model = lambda m: self.on_model_solution(m))
+        ctl.solve(on_finish = lambda sat: self.on_unsat(sat, binfo, performance_start_time, start_time, file), on_model = lambda m: self.on_model_solution(m))
 
-    def on_unsat(self, sat):
+    def on_unsat(self, sat, binfo, performance_start_time, start_time, file):
         if (sat.unsatisfiable == True):
+            binfo.solving_successfull = -1
+            if(file):
+                binfo.end_benchmark(performance_start_time, start_time, file)
             sys.exit("Instance unsolvable. Maybe try a greater horizon.")
 
     def on_model_solution(self, m):
