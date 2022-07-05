@@ -5,38 +5,6 @@ from instance import ClingoInstance
 from tree import ConstraintTree
 from benchmarkInfo import BenchmarkInfo
 
-#Yields initial single agent plans
-def initial_solve(horizon, trans_instance, node, binfo, performance_start_time, start_time):
-    ctl = clingo.Control(["--opt-mode=opt", f"-c horizon={horizon}"])
-    ctl.load("Encodings/plans.lp")
-    trans_instance.load_in_clingo(ctl, False, 0)
-    ctl.ground([("base", [])])
-
-    ctl.solve(on_finish = lambda sat: on_unsat(sat, binfo, performance_start_time, start_time), on_model = lambda m: on_initial_model(node, m))
-
-def on_unsat(sat, binfo, performance_start_time, start_time):
-    if (sat.unsatisfiable == True):
-        binfo.solving_successfull = -1
-        if(args.benchmark):
-            binfo.end_benchmark(performance_start_time, start_time, args.benchmark)
-        sys.exit("Instance unsolvable. Maybe try a greater horizon.")
-
-#Saves plans in a dict and first conflict in a list
-def on_initial_model(node, m):
-    for symbol in m.symbols(shown=True):
-        if(str(symbol).startswith("robot_at") and len(symbol.arguments) > 2):
-            robot_id = str(symbol.arguments[0])
-            node_id = str(symbol.arguments[1])
-            step = int(str(symbol.arguments[2]))
-
-            if robot_id in node.solution.keys():
-                node.solution[robot_id][step] = node_id
-            else:
-                node.solution[robot_id] = {step : node_id}
-
-        if(str(symbol).startswith("sum_of_costs")):
-            node.cost = int(str(symbol.arguments[0]))
-
 def transform_to_asprilo_output(trans_instance, node):
     ctl = clingo.Control([])
     ctl.load("Encodings/output.lp")
@@ -85,7 +53,8 @@ def run(args):
     root_node = ConstraintNode()
     root_node.parent = 0
     root_node.id = 1
-    initial_solve(horizon, trans_instance, root_node, binfo, performance_start_time, start_time)
+    root_node.update_solution(horizon, trans_instance, False, 0, binfo, performance_start_time, start_time, args.benchmark)
+    root_node.calculate_cost(trans_instance)
     tree.nodes.append(root_node)
 
     #Main CBS loop
@@ -97,7 +66,7 @@ def run(args):
             if(args.benchmark):
                 binfo.solving_successfull = 1
                 binfo.end_benchmark(performance_start_time, start_time, args.benchmark)
-            print("Instance solved.")
+            print("Instance solved. SoC: ", tree.next.cost)
 
             if(args.asprilo_output):
                 transform_to_asprilo_output(trans_instance, tree.next)
@@ -108,22 +77,43 @@ def run(args):
             break
         else:
             expansions += 1
-            print(expansions)
+            #print("EX:", expansions)
             cnt = 0
             for robot in tree.next.min_conflict.get("robots"):
                 child_node = ConstraintNode()
                 child_node.parent = tree.next.id
                 child_node.id = tree.next.id*2 + cnt
-                child_node.constraint.append([robot, tree.next.min_conflict.get("node"), tree.next.min_conflict.get("step")])
+
+                #Vertex conflict as new constraint
+                if tree.next.min_conflict.get("type") == 0:
+                    child_node.constraint.append(["vertex", robot, tree.next.min_conflict.get("node"), tree.next.min_conflict.get("step")])
+                #Edge conflict as new constraint
+                else:
+                    if cnt == 0:
+                        child_node.constraint.append(["edge", robot, tree.next.min_conflict.get("node_1"), tree.next.min_conflict.get("node_2"), tree.next.min_conflict.get("step")])
+                    else:
+                        child_node.constraint.append(["edge",robot, tree.next.min_conflict.get("node_2"), tree.next.min_conflict.get("node_1"), tree.next.min_conflict.get("step")])
+                
+                #Append constraints of parent node
                 for cons in tree.next.constraint:
                     child_node.constraint.append(cons)
+                
+                #Append plans of parent node for non-constrained agents
                 for plan in tree.next.solution.items():
                     if(plan[0]!=robot):
                         child_node.solution[plan[0]] = plan[1]
-                child_node.update_solution(horizon, trans_instance, robot, binfo, performance_start_time, start_time, args.benchmark)
+
+                #Update plan of the newly constrained agent
+                child_node.update_solution(horizon, trans_instance, True, robot, binfo, performance_start_time, start_time, args.benchmark)
+
+                #Calculate new SoC for the node
                 child_node.calculate_cost(trans_instance)
                 cnt += 1
+
+                #Add child node to the open list
                 tree.nodes.append(child_node)
+
+            #Remove parent node from the open list
             tree.nodes.remove(tree.next)
     else:
         if(args.benchmark):
