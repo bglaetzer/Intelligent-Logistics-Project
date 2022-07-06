@@ -53,7 +53,7 @@ def run(args):
     root_node = ConstraintNode()
     root_node.parent = 0
     root_node.id = 1
-    root_node.update_solution(horizon, trans_instance, False, 0, binfo, performance_start_time, start_time, args.benchmark)
+    root_node.update_solution(horizon, trans_instance, False, 0, binfo, performance_start_time, start_time, args.benchmark, args.stay)
     root_node.calculate_cost(trans_instance)
     tree.nodes.append(root_node)
 
@@ -62,6 +62,7 @@ def run(args):
         binfo.node_expansions = expansions
         tree.get_next()
         tree.next.validate_solution()
+        tree.next.show()
         if(len(tree.next.min_conflict) == 0):
             if(args.benchmark):
                 binfo.solving_successfull = 1
@@ -77,7 +78,7 @@ def run(args):
             break
         else:
             expansions += 1
-            #print("EX:", expansions)
+            print("EX:", expansions)
             cnt = 0
             for robot in tree.next.min_conflict.get("robots"):
                 child_node = ConstraintNode()
@@ -104,7 +105,7 @@ def run(args):
                         child_node.solution[plan[0]] = plan[1]
 
                 #Update plan of the newly constrained agent
-                child_node.update_solution(horizon, trans_instance, True, robot, binfo, performance_start_time, start_time, args.benchmark)
+                child_node.update_solution(horizon, trans_instance, True, robot, binfo, performance_start_time, start_time, args.benchmark, args.stay)
 
                 #Calculate new SoC for the node
                 child_node.calculate_cost(trans_instance)
@@ -131,6 +132,7 @@ parser.add_argument("-o", "--horizon", help="The upper bound for the solution, a
 parser.add_argument("-v", "--visualize", help="Visualizes the solution with asprilo viz. Clingraph visualization currently disabled.", action='store_true')
 parser.add_argument("-a", "--asprilo_output", help="Generates an asprilo output file for the solution and saves it at the specified location", default="")
 parser.add_argument("-b", "--benchmark", help="Activate Benchmarking and output it to the specified file", default="")
+parser.add_argument("-s", "--stay", help="STILL IN TESTING: Activate stay at target behaviour for the agents. Default behaviour is disappear at target.", action='store_true')
 
 
 args = parser.parse_args()

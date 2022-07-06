@@ -59,9 +59,13 @@ class ConstraintNode():
 
 
 
-    def update_solution(self, horizon, instance, flag, agent, binfo, performance_start_time, start_time, file):
+    def update_solution(self, horizon, instance, flag, agent, binfo, performance_start_time, start_time, file, stay):
         ctl = clingo.Control(["-n 1", "--opt-mode=optN", f"-c horizon={horizon}"])
         ctl.load("Encodings/plans.lp")
+
+        if(stay):
+            ctl.add("base",[],":- plan_length(RID, T), goal(NID, RID), step(T'), T' > T, not robot_at(RID,NID, T') : not constraint(_,NID,T').")
+
         instance.load_in_clingo(ctl, flag, agent)
         self.load_constraints_in_clingo(ctl)
 

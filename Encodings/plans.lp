@@ -20,9 +20,6 @@ robot_at(RID,NID,T) :- move(RID,D,T), robot_at(RID,NID',T-1), nextto(NID',D,NID)
 %% GOAL %%
 :- not robot_at(RID, NID, _), goal(NID, RID).
 
-%% STAY AT TARGET %%
-:- plan_length(RID, T), goal(NID, RID), step(T'), T' > T, not robot_at(RID,NID, T') : not constraint(_,NID,T').
-
 %% MINIMIZATION %%
 plan_length(RID, T) :- robot_at(RID,NID,T), goal(NID, RID), #false : robot_at(RID,NID,T'), T' < T.
 atleast(S) :- S = #sum{T,RID : plan_length(RID, T)}.
